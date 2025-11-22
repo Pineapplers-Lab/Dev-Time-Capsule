@@ -9,16 +9,14 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# AI Integration (Optional)
 try:
     import google.generativeai as genai
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
 
-app = FastAPI(title="RepoLens Backend")
+app = FastAPI(title="Backend")
 
-# Allow CORS for Next.js
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,8 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# --- Models ---
 
 class AnalyzeRequest(BaseModel):
     repo_url: str
@@ -64,15 +60,11 @@ class AnalysisResult(BaseModel):
     security: List[SecurityIssue]
     startup_issues: List[StartupIssue]
 
-# Context Store
 REPO_CONTEXT_STORE = {}
-
-# --- Helpers ---
 
 def clone_repository(url: str) -> str:
     temp_dir = tempfile.mkdtemp()
     try:
-        # Basic clone (ensure git is installed)
         subprocess.check_call(["git", "clone", "--depth", "1", url, temp_dir])
         return temp_dir
     except Exception:
@@ -84,29 +76,34 @@ def get_file_structure(root_dir: str) -> FileNode:
     node = FileNode(name=name, type="folder", children=[])
     try:
         for entry in os.scandir(root_dir):
-            if entry.name.startswith('.') or entry.name == "__pycache__": continue
+            if entry.name.startswith('.') or entry.name == "__pycache__":
+                continue
             if entry.is_dir():
                 node.children.append(get_file_structure(entry.path))
             else:
                 loc = 0
                 try:
-                    with open(entry.path, 'r', errors='ignore') as f: loc = sum(1 for _ in f)
-                except: pass
+                    with open(entry.path, 'r', errors='ignore') as f:
+                        loc = sum(1 for _ in f)
+                except:
+                    pass
                 node.children.append(FileNode(name=entry.name, type="file", loc=loc))
-    except PermissionError: pass
+    except PermissionError:
+        pass
     node.children.sort(key=lambda x: (x.type != 'folder', x.name))
     return node
 
 def analyze_security(root_dir: str) -> List[SecurityIssue]:
     issues = []
     patterns = {
-        r'AWS_ACCESS_KEY_ID\s*=\s*['"][A-Z0-9]{20}['"]': "Potential AWS Access Key",
-        r'Authorization\s*:\s*['"]Bearer\s+ey': "Hardcoded JWT Token",
-        r'api_key\s*=\s*['"][a-zA-Z0-9]{20,}['"]': "Hardcoded API Key"
+        r"AWS_ACCESS_KEY_ID\s*=\s*['\"][A-Z0-9]{20}['\"]": "Potential AWS Access Key",
+        r"Authorization\s*:\s*['\"]Bearer\s+ey": "Hardcoded JWT Token",
+        r"api_key\s*=\s*['\"][a-zA-Z0-9]{20,}['\"]": "Hardcoded API Key"
     }
     for root, _, files in os.walk(root_dir):
         for file in files:
-            if file.startswith('.') or file.endswith(('.png', '.jpg', '.lock')): continue
+            if file.startswith('.') or file.endswith(('.png', '.jpg', '.lock')):
+                continue
             path = os.path.join(root, file)
             try:
                 with open(path, 'r', errors='ignore') as f:
@@ -115,14 +112,13 @@ def analyze_security(root_dir: str) -> List[SecurityIssue]:
                             if re.search(pat, line):
                                 rel = os.path.relpath(path, root_dir)
                                 issues.append(SecurityIssue(severity="high", file=rel, line=i, description=desc))
-            except: pass
+            except:
+                pass
     return issues
 
 def analyze_environment_and_deps(root_dir: str) -> tuple[Dict, List[Dict]]:
     env = {"language": "Unknown", "framework": "Unknown", "buildSystem": "Unknown", "nodeVersion": "Unknown"}
     deps = []
-    
-    # JS/TS
     pkg_path = os.path.join(root_dir, "package.json")
     if os.path.exists(pkg_path):
         env["language"] = "JavaScript/TypeScript"
@@ -131,18 +127,18 @@ def analyze_environment_and_deps(root_dir: str) -> tuple[Dict, List[Dict]]:
             with open(pkg_path) as f:
                 data = json.load(f)
                 all_deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
-                if "next" in all_deps: env["framework"] = "Next.js"
-                elif "react" in all_deps: env["framework"] = "React"
-                
+                if "next" in all_deps:
+                    env["framework"] = "Next.js"
+                elif "react" in all_deps:
+                    env["framework"] = "React"
                 for name, ver in all_deps.items():
                     is_dep = False
-                    clean_ver = ver.replace('^','').replace('~','')
-                    # Simple deprecation check heuristic
-                    if name == 'react' and clean_ver.startswith('16'): is_dep = True
+                    clean_ver = ver.replace('^', '').replace('~', '')
+                    if name == 'react' and clean_ver.startswith('16'):
+                        is_dep = True
                     deps.append({"name": name, "version": ver, "type": "prod", "is_deprecated": is_dep})
-        except: pass
-
-    # Python
+        except:
+            pass
     req_path = os.path.join(root_dir, "requirements.txt")
     if os.path.exists(req_path):
         env["language"] = "Python"
@@ -153,11 +149,13 @@ def analyze_environment_and_deps(root_dir: str) -> tuple[Dict, List[Dict]]:
                     parts = line.strip().split('==')
                     if len(parts) > 0:
                         name = parts[0]
-                        deps.append({"name": name, "version": parts[1] if len(parts)>1 else "latest", "type": "prod"})
-                        if "django" in name.lower(): env["framework"] = "Django"
-                        if "fastapi" in name.lower(): env["framework"] = "FastAPI"
-        except: pass
-    
+                        deps.append({"name": name, "version": parts[1] if len(parts) > 1 else "latest", "type": "prod"})
+                        if "django" in name.lower():
+                            env["framework"] = "Django"
+                        if "fastapi" in name.lower():
+                            env["framework"] = "FastAPI"
+        except:
+            pass
     return env, deps
 
 def analyze_startup(root_dir: str, env: Dict) -> List[StartupIssue]:
@@ -183,26 +181,26 @@ def generate_tasks(root_dir: str, env: Dict) -> List[str]:
 def cleanup_temp(path: str):
     shutil.rmtree(path, ignore_errors=True)
 
-# --- Routes ---
-
 @app.post("/analyze", response_model=AnalysisResult)
 async def analyze_repo(request: AnalyzeRequest, background_tasks: BackgroundTasks):
     try:
         repo_path = clone_repository(request.repo_url)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
     try:
         structure = get_file_structure(repo_path)
         env, deps = analyze_environment_and_deps(repo_path)
         security = analyze_security(repo_path)
         startup = analyze_startup(repo_path, env)
         tasks = generate_tasks(repo_path, env)
-        
         result = AnalysisResult(
             repo_id=request.repo_url,
-            environment=env, dependencies=deps[:50], structure=structure,
-            tasks=tasks, security=security, startup_issues=startup
+            environment=env,
+            dependencies=deps[:50],
+            structure=structure,
+            tasks=tasks,
+            security=security,
+            startup_issues=startup
         )
         REPO_CONTEXT_STORE[request.repo_url] = result.dict()
         background_tasks.add_task(cleanup_temp, repo_path)
@@ -214,22 +212,19 @@ async def analyze_repo(request: AnalyzeRequest, background_tasks: BackgroundTask
 @app.post("/chat")
 async def chat_agent(request: ChatRequest):
     context = REPO_CONTEXT_STORE.get(request.repo_id)
-    
     if HAS_GENAI and os.environ.get("GEMINI_API_KEY"):
         try:
             genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-            model = genai.GenerativeModel('gemini-pro')
-            prompt = f"Context: {json.dumps(context, default=str)}
-User: {request.message}
-Helpful coding answer:"
+            model = genai.GenerativeModel("gemini-pro")
+            prompt = f"Context: {json.dumps(context, default=str)}\nUser: {request.message}\nHelpful coding answer:"
             response = model.generate_content(prompt)
             return {"response": response.text}
-        except: pass
-
-    # Fallback Rule-based
+        except:
+            pass
     msg = request.message.lower()
     resp = "I can help check configuration and structure."
-    if "security" in msg: resp = "Checked for secrets. See the Security tab."
-    elif "run" in msg: resp = "Check the tasks list for run commands."
-    
+    if "security" in msg:
+        resp = "Checked for secrets. See the Security tab."
+    elif "run" in msg:
+        resp = "Check the tasks list for run commands."
     return {"response": resp}

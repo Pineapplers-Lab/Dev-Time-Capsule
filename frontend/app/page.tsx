@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from 'react';
 import { Code2, Box, GitBranch, Bot } from 'lucide-react';
-import { RepoAnalysis } from './types';
-import { IntakeView } from './components/views/IntakeView';
-import { DashboardView } from './components/views/DashboardView';
-import { StructureView } from './components/views/StructureView';
-import { TaskWalkthroughView } from './components/views/TaskWalkthroughView';
+import { RepoAnalysis } from '../types';
+import { IntakeView } from '../components/views/IntakeView';
+import { DashboardView } from '../components/views/DashboardView';
+import { StructureView } from '../components/views/StructureView';
+import { TaskWalkthroughView } from '../components/views/TaskWalkthroughView';
 
 // Mock Data Fallback
 const MOCK_DATA: RepoAnalysis = {
