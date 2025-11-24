@@ -12,7 +12,7 @@ The platform offers:
 - **Temporary Repository Handling:** Safe cloning and automatic cleanup of repositories to maintain security and resource efficiency.
 
 ## Architecture
-
+![alt text](image.png)
 1. **FastAPI Backend:** Handles API requests for repository analysis and chat interactions.
 2. **Language Model Integration:** Uses Transformers and PyTorch to run a causal language model for contextual queries.
 3. **Repository Context Store:** In-memory store (`REPO_CONTEXT_STORE`) for tracking analyzed repositories and enabling context-aware chat.
