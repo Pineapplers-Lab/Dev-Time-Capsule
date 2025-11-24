@@ -1,7 +1,7 @@
 # Repository Analysis and AI Assistant Platform
 
 This project provides an end-to-end system for analyzing code repositories, detecting security and startup issues, and enabling interactive queries through a language model. It is designed to assist developers, auditors, and DevOps teams in understanding, verifying, and interacting with codebases efficiently.
-![alt text](<WhatsApp Image 2025-11-23 at 22.01.04_532f1e94.jpg>)
+![alt text](<README.jpg>)
 ## Overview
 
 The platform offers:
