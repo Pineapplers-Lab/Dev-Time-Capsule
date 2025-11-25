@@ -11,7 +11,7 @@ import { TaskWalkthroughView } from '../components/views/TaskWalkthroughView';
 const MOCK_DATA: RepoAnalysis = {
   repo_id: "github.com/mock/repo",
   environment: { language: "TypeScript", framework: "Next.js", nodeVersion: ">=11", buildSystem: "Turbo" },
-  dependencies: [{ name: "react", version: "18.2", type: "prod" }],
+  dependencies: [{ name: "react", version: "20.9", type: "prod" }],
   structure: { name: "root", type: "folder", children: [{ name: "src", type: "folder", children: [] }] },
   tasks: ["npm install", "npm run dev"],
   security: [],
