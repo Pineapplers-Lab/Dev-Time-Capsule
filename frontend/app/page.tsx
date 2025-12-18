@@ -26,7 +26,7 @@ export default function Home() {
   const handleAnalyze = async (url: string) => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/analyze', {
+      const res = await fetch('https://dev-time-capsule-production.up.railway.app/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repo_url: url })
       });
       if (!res.ok) throw new Error();

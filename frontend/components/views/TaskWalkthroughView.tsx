@@ -21,7 +21,7 @@ export const TaskWalkthroughView = ({ repoId }: { repoId: string }) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/chat', {
+      const res = await fetch('https://dev-time-capsule-production.up.railway.app/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo_id: repoId, message: messageText, history: [] })
