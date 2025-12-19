@@ -146,7 +146,7 @@ def analyze_environment_and_deps(root_dir: str):
                 if name == "next":
                     env["framework"] = "Next.js"
                 if name == "react":
-                    env["framework"] = "React"}
+                    env["framework"] = "React"
 
     req_path = os.path.join(root_dir, "requirements.txt")
     if os.path.exists(req_path):
