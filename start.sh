@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
+cd backend
 
-# Install dependencies
 pip install --no-cache-dir -r requirements.txt
 
 # Start the FastAPI app with uvicorn
