@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #007aff; /* iOS blue */
+  --success: #28a745;
+  --gray: #6b7280;
+  --light-gray: #e5e7eb;
+  --light-bg: #f9f9f9;
 }
 
 @theme inline {

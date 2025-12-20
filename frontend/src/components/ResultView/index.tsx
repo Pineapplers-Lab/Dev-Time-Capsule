@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Layout, Terminal, ShieldCheck, Compass } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import OverviewTab from "./OverviewTab";
 import OnboardingTab from "./OnboardingTab";
 import SecurityTab from "./SecurityTab";
 import AdvisoryTab from "./AdvisoryTab";
+import Header from "../Header";
 
 interface ResultViewProps {
   result: any;
@@ -16,6 +18,7 @@ export default function ResultView({ result, setView }: ResultViewProps) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "onboarding" | "security" | "pavilion"
   >("overview");
+  const [loadingTab, setLoadingTab] = useState(false);
 
   const tabs = [
     { id: "overview", icon: <Layout size={16} />, label: "Overview" },
@@ -24,20 +27,43 @@ export default function ResultView({ result, setView }: ResultViewProps) {
     { id: "pavilion", icon: <Compass size={16} />, label: "Pavilion" },
   ];
 
+  const handleTabChange = (tabId: string) => {
+    if (tabId === activeTab) return;
+    setLoadingTab(true);
+    setTimeout(() => {
+      setActiveTab(tabId as any);
+      setLoadingTab(false);
+    }, 300); // small delay for loader
+  };
+
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div className="animate-in fade-in duration-700 px-6">
+      <Header view="result" setView={setView} />
+
       <div className="mb-10">
         <div className="flex items-center gap-2 mb-4">
-          <span className="px-2.5 py-1 bg-[var(--success)]/10 text-[var(--success)] text-[11px] font-bold uppercase tracking-widest rounded-md">
+          <span className="px-3 py-1 bg-(--primary)/10 text-(--primary) text-[11px] font-bold uppercase tracking-widest rounded-md">
             Audit Ready
           </span>
         </div>
-        <h2 className="text-5xl font-bold tracking-tight mb-6">
+        <motion.h2
+          key={result.projectName}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-5xl font-bold tracking-tight mb-6"
+        >
           {result.projectName}
-        </h2>
-        <p className="text-[21px] text-[var(--gray)] font-medium leading-[1.3] max-w-2xl tracking-tight">
+        </motion.h2>
+        <motion.p
+          key={result.stackDescription}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-[21px] text-[var(--gray)] font-medium leading-[1.3] max-w-2xl tracking-tight"
+        >
           {result.stackDescription}
-        </p>
+        </motion.p>
       </div>
 
       <div className="flex justify-center mb-12">
@@ -45,12 +71,11 @@ export default function ResultView({ result, setView }: ResultViewProps) {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold transition-all rounded-xl ${
-                activeTab === tab.id
-                  ? "bg-[#1D1D1F] text-white shadow-md"
+              onClick={() => handleTabChange(tab.id)}
+              className={`flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold transition-all rounded-xl ${activeTab === tab.id
+                  ? "bg-(--primary) text-white shadow-md"
                   : "text-[var(--gray)] hover:text-black hover:bg-[var(--light-bg)]"
-              }`}
+                }`}
             >
               {tab.icon} {tab.label}
             </button>
@@ -58,11 +83,41 @@ export default function ResultView({ result, setView }: ResultViewProps) {
         </div>
       </div>
 
-      <div className="min-h-[400px]">
-        {activeTab === "overview" && <OverviewTab stackDetails={result.stackDetails} />}
-        {activeTab === "onboarding" && <OnboardingTab onboarding={result.onboarding} />}
-        {activeTab === "security" && <SecurityTab vulnerabilities={result.vulnerabilities} />}
-        {activeTab === "pavilion" && <AdvisoryTab advisory={result.advisory} />}
+      <div className="min-h-[400px] relative">
+        <AnimatePresence mode="wait">
+          {loadingTab ? (
+            <motion.div
+              key="loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-center h-96"
+            >
+              <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {activeTab === "overview" && (
+                <OverviewTab stackDetails={result.stackDetails} />
+              )}
+              {activeTab === "onboarding" && (
+                <OnboardingTab onboarding={result.onboarding} />
+              )}
+              {activeTab === "security" && (
+                <SecurityTab vulnerabilities={result.vulnerabilities} />
+              )}
+              {activeTab === "pavilion" && (
+                <AdvisoryTab advisory={result.advisory} />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
