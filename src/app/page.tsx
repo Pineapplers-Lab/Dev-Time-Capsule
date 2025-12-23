@@ -242,14 +242,163 @@ export default function App() {
     );
   }
 
-  // Results view (onboarding, anatomy, vulns) JSX remains unchanged
-  // Just ensure all arrays are accessed with ensureArray(scanResults?....)
-
+  // -------------------- RESULTS --------------------
   return (
     <div className="min-h-screen bg-[#FBFBFD] text-black antialiased">
       <Navbar />
+
       <main className="max-w-[1100px] mx-auto px-8 py-16 animate-in fade-in duration-1000">
-        {/* The onboarding / anatomy / vulnerabilities JSX as in your original code */}
+        {/* ONBOARDING TAB */}
+        {activeTab === 'onboarding' && (
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-2 space-y-12">
+                <section>
+                  <div className="flex items-center gap-2 mb-6 text-gray-400">
+                    <Fingerprint size={16} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Project Identity</span>
+                  </div>
+                  <h2 className="text-4xl font-semibold tracking-tight mb-6">Repository Overview</h2>
+                  <p className="text-xl text-gray-500 font-medium leading-relaxed">
+                    {scanResults?.repo_overview || "Project overview pending..."}
+                  </p>
+                </section>
+
+                <section className="bg-white p-10 rounded-[32px] border border-gray-200/60 shadow-sm">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <ListChecks size={18} className="text-black" />
+                      <h3 className="text-lg font-semibold">Action Plan</h3>
+                    </div>
+                    <span className="px-3 py-1 bg-gray-100 rounded-full text-[10px] font-bold text-gray-500">Day 1</span>
+                  </div>
+                  <div className="grid gap-4">
+                    {ensureArray(scanResults?.onboarding_checklist).length > 0 ? (
+                      ensureArray(scanResults?.onboarding_checklist).map((item, idx) => (
+                        <div key={idx} className="flex gap-4 p-5 bg-[#FBFBFD] rounded-2xl border border-gray-100 group">
+                          <div className={`mt-1 h-4 w-4 rounded-full border flex-shrink-0 ${item.priority === 'High' ? 'border-black bg-black' : 'border-gray-200'}`}></div>
+                          <div>
+                            <p className="text-sm font-semibold text-black mb-1">{item.task}</p>
+                            <p className="text-xs text-gray-500 font-medium leading-relaxed">{item.description}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">No tasks identified.</p>
+                    )}
+                  </div>
+                </section>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-black p-8 rounded-[32px] text-white">
+                  <BookOpen size={20} className="mb-4 text-gray-400" />
+                  <h4 className="text-lg font-semibold mb-3 tracking-tight">Mentorship Note</h4>
+                  <p className="text-gray-400 text-sm font-medium leading-relaxed mb-8">
+                    Automated checks verify codebase safety by mapping known vulnerabilities to the current architecture.
+                  </p>
+                  <div className="pt-6 border-t border-white/10">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-[10px] text-gray-500 font-bold uppercase">Safety Score</span>
+                      <span className="text-2xl font-semibold">{scanResults?.metadata?.onboarding_score ?? 0}%</span>
+                    </div>
+                    <div className="h-1 w-full bg-white/10 rounded-full">
+                      <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${scanResults?.metadata?.onboarding_score ?? 0}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[32px] border border-gray-200/60 shadow-sm">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Core Stack</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {ensureArray(scanResults?.tech_stack).length > 0 ? (
+                      ensureArray(scanResults?.tech_stack).map((tech, i) => (
+                        <span key={i} className="px-3 py-1 bg-gray-50 text-[10px] font-semibold rounded-lg border border-gray-100">
+                          {tech}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-gray-400">Discovering stack...</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ANATOMY TAB */}
+        {activeTab === 'anatomy' && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {ensureArray(scanResults?.anatomy).length > 0 ? (
+              ensureArray(scanResults?.anatomy).map((comp, idx) => (
+                <div key={idx} className="bg-white p-8 rounded-[32px] border border-gray-200 shadow-sm flex flex-col group transition-all hover:border-black/20 hover:shadow-md">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-black group-hover:text-white transition-all">
+                        <Layout size={18} />
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{comp.category}</span>
+                        <h3 className="text-base font-semibold text-black">{comp.component}</h3>
+                      </div>
+                    </div>
+                    <ArrowUpRight size={16} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+
+                  <div className="space-y-6 flex-1">
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-black leading-snug">{comp.purpose}</p>
+                      <p className="text-xs text-gray-400 font-medium leading-relaxed">{comp.reason_for_use}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-black leading-snug">Analysis</p>
+                      <p className="text-xs text-gray-400 font-medium leading-relaxed">{comp.analysis}</p>
+                    </div>
+                    {ensureArray(comp.evidence).length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {comp.evidence.map((ev: string, i: number) => (
+                          <span key={i} className="px-3 py-1 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-medium">{ev}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm italic col-span-2">No components found.</p>
+            )}
+          </div>
+        )}
+
+        {/* VULNERABILITIES TAB */}
+        {activeTab === 'vulns' && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {ensureArray(scanResults?.vulnerabilities).length > 0 ? (
+              ensureArray(scanResults?.vulnerabilities).map((vuln, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col group">
+                  <div className="flex justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert size={16} className="text-red-400" />
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{vuln.severity}</span>
+                    </div>
+                    <button onClick={() => handleCopy(vuln.id, vuln.id)} className="text-gray-400 hover:text-black transition-colors">
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  <p className="text-sm font-semibold text-black">{vuln.package}@{vuln.version}</p>
+                  <p className="text-xs text-gray-400 font-medium mb-2">{vuln.explanation}</p>
+                  <p className="text-xs text-gray-500 font-medium"><strong>Resolution:</strong> {vuln.resolution}</p>
+                  {vuln.reachability && (
+                    <p className="text-[10px] mt-1 text-gray-300 font-medium"><strong>Trace:</strong> {vuln.reachability.trace}</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm italic col-span-2">No vulnerabilities found.</p>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
