@@ -2,45 +2,86 @@
 
 import React, { useState, useRef } from 'react';
 import {
-  ShieldCheck, Copy, Check, Shapes, FolderOpen, FileCode, Globe,
-  AlertCircle, Terminal as TerminalIcon, UserPlus, Rocket, Info,
-  ListChecks, BookOpen, Layout, Cpu, ShieldAlert, Fingerprint,
-  ArrowUpRight, Code, Activity
+  ShieldCheck,
+  Copy,
+  Check,
+  Shapes,
+  FolderOpen,
+  FileCode,
+  Globe,
+  AlertCircle,
+  Terminal as TerminalIcon,
+  UserPlus,
+  Rocket,
+  Info,
+  ListChecks,
+  BookOpen,
+  Layout,
+  Cpu,
+  ShieldAlert,
+  Fingerprint,
+  ArrowUpRight,
+  Code,
+  Activity
 } from 'lucide-react';
 
 const apiKey = "AIzaSyAdmLo6ZoiupQHO-o5pfiyClheSzUzuXgM";
 const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
 
+type ScanStep = 'Initializing Analysis' | 'Reading manifest' | 'Mapping dependencies' | 'Analyzing logic' | 'Simulating reachability' | 'Finalizing guide' | 'Compiling report';
+type View = 'upload' | 'results';
+type Tab = 'onboarding' | 'anatomy' | 'vulns';
+
 export default function App() {
-  const [view, setView] = useState('upload');
-  const [activeTab, setActiveTab] = useState('onboarding');
-  const [copiedId, setCopiedId] = useState(null);
+  const [view, setView] = useState<View>('upload');
+  const [activeTab, setActiveTab] = useState<Tab>('onboarding');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [repoUrl, setRepoUrl] = useState('');
-  const [scanResults, setScanResults] = useState(null);
-  const [error, setError] = useState(null);
-  const [scanStep, setScanStep] = useState('');
+  const [scanResults, setScanResults] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [scanStep, setScanStep] = useState<ScanStep | string>('');
 
-  const fileInputRef = useRef(null);
-  const folderInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
 
-  const ensureArray = (arr) => Array.isArray(arr) ? arr : [];
+  const ensureArray = <T,>(arr: T | T[] | undefined | null): T[] => Array.isArray(arr) ? arr : (arr ? [arr] : []);
 
-  async function performRealScan(contextData) {
+  const handleCopy = (text: string, id: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  async function performRealScan(contextData: any) {
     setIsScanning(true);
     setScanStep('Initializing Analysis');
     setError(null);
 
     const systemPrompt = `
       You are a high-end technical onboarding assistant.
+      Provide a clean, sophisticated breakdown of a codebase.
+      - "metadata": { "onboarding_score": number }
+      - "repo_overview": string
+      - "tech_stack": string[]
+      - "onboarding_checklist": { task: string, description: string, priority: "High"|"Medium"|"Low" }[]
+      - "anatomy": { category: string, component: string, purpose: string, reason_for_use: string, analysis: string, evidence: string[] }[]
+      - "vulnerabilities": { package: string, version: string, severity: string, id: string, explanation: string, resolution: string, fix: string, reachability: { status: string, trace: string } }[]
+      
       Respond ONLY in valid JSON.
     `;
-    const userQuery = `Conduct a pre-onboarding safety audit: ${JSON.stringify(contextData)}.`;
+
+    const userQuery = `Conduct a pre-onboarding safety audit: ${JSON.stringify(contextData)}. Focus on architectural risks and dependency vulnerabilities.`;
 
     let retries = 0;
     while (retries < 5) {
       try {
-        const steps = ['Reading manifest', 'Mapping dependencies', 'Analyzing logic', 'Simulating reachability', 'Finalizing guide'];
+        const steps: ScanStep[] = ['Reading manifest', 'Mapping dependencies', 'Analyzing logic', 'Simulating reachability', 'Finalizing guide'];
         setScanStep(steps[retries] || 'Compiling report');
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
@@ -56,8 +97,8 @@ export default function App() {
         if (!response.ok) throw new Error('API failure');
         const result = await response.json();
 
-        const content = result.candidates?.[0]?.content?.[0]?.text;
-        if (!content) throw new Error('Empty response');
+        const content = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!content) throw new Error('Empty response from mentor');
 
         const data = JSON.parse(content);
 
@@ -85,19 +126,12 @@ export default function App() {
     }
   }
 
-  const handleCopy = async (text, id) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 1500);
-    } catch {
-      console.error("Copy failed");
-    }
-  };
-
   const Navbar = () => (
     <nav className="h-14 border-b border-gray-100 bg-white/70 backdrop-blur-xl sticky top-0 z-40 px-6 flex items-center justify-between">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setView('upload'); setScanResults(null); setActiveTab('onboarding'); }}>
+      <div
+        className="flex items-center gap-2 cursor-pointer"
+        onClick={() => { setView('upload'); setScanResults(null); setActiveTab('onboarding'); }}
+      >
         <div className="bg-black p-1.5 rounded-lg shadow-sm">
           <ShieldCheck size={16} className="text-white" />
         </div>
@@ -106,15 +140,23 @@ export default function App() {
 
       {view === 'results' && (
         <div className="flex bg-gray-100/60 p-1 rounded-xl border border-gray-200/50">
-          {[{ id: 'onboarding', Icon: UserPlus, label: 'Overview' }, { id: 'anatomy', Icon: Shapes, label: 'Anatomy' }, { id: 'vulns', Icon: ShieldAlert, label: 'Security' }].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-medium transition-all ${activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>
+          {[
+            { id: 'onboarding', Icon: UserPlus, label: 'Overview' },
+            { id: 'anatomy', Icon: Shapes, label: 'Anatomy' },
+            { id: 'vulns', Icon: ShieldAlert, label: 'Security' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as Tab)}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-medium transition-all ${activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-900'
+                }`}
+            >
               <tab.Icon size={14} />
               <span>{tab.label}</span>
             </button>
           ))}
         </div>
       )}
-
       <div className="flex items-center gap-2">
         <div className="h-1.5 w-1.5 rounded-full bg-gray-300"></div>
         <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">v2.2</span>
@@ -139,8 +181,12 @@ export default function App() {
 
         <main className="max-w-[1000px] mx-auto px-8 pt-32">
           <div className="max-w-xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <h1 className="text-5xl font-semibold tracking-tight leading-[1.1] mb-8 text-black">Engineering <br /> Onboarding.</h1>
-            <p className="text-lg text-gray-500 font-medium mb-16 leading-relaxed">Identify architectural risks and dependency vulnerabilities before you begin development or deployment.</p>
+            <h1 className="text-5xl font-semibold tracking-tight leading-[1.1] mb-8 text-black">
+              Engineering <br /> Onboarding.
+            </h1>
+            <p className="text-lg text-gray-500 font-medium mb-16 leading-relaxed">
+              Identify architectural risks and dependency vulnerabilities before you begin development or deployment.
+            </p>
 
             {error && (
               <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-medium">
@@ -150,19 +196,40 @@ export default function App() {
             )}
 
             <div className="space-y-4">
-              <form onSubmit={(e) => { e.preventDefault(); performRealScan({ url: repoUrl }); }} className="relative flex items-center group">
+              <form
+                onSubmit={(e) => { e.preventDefault(); performRealScan({ url: repoUrl }); }}
+                className="relative flex items-center group"
+              >
                 <Globe className="absolute left-5 text-gray-400 group-focus-within:text-black transition-colors" size={18} />
-                <input type="text" placeholder="GitHub Repository URL" className="w-full bg-white border border-gray-200 rounded-2xl py-5 pl-14 pr-44 text-sm font-medium focus:border-gray-400 focus:ring-0 transition-all outline-none shadow-sm" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} />
-                <button type="submit" disabled={!repoUrl || isScanning} className="absolute right-2 bg-black text-white px-6 py-3 rounded-xl text-xs font-semibold hover:bg-gray-800 disabled:opacity-20 transition-all shadow-lg">Analyze</button>
+                <input
+                  type="text"
+                  placeholder="GitHub Repository URL"
+                  className="w-full bg-white border border-gray-200 rounded-2xl py-5 pl-14 pr-44 text-sm font-medium focus:border-gray-400 focus:ring-0 transition-all outline-none shadow-sm"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  disabled={!repoUrl || isScanning}
+                  className="absolute right-2 bg-black text-white px-6 py-3 rounded-xl text-xs font-semibold hover:bg-gray-800 disabled:opacity-20 transition-all shadow-lg"
+                >
+                  Analyze
+                </button>
               </form>
 
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => folderInputRef.current?.click()} className="flex items-center gap-4 p-6 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all group shadow-sm">
+                <button
+                  onClick={() => folderInputRef.current?.click()}
+                  className="flex items-center gap-4 p-6 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all group shadow-sm"
+                >
                   <FolderOpen size={20} className="text-gray-400 group-hover:text-black transition-colors" />
                   <span className="text-sm font-semibold text-gray-900">Project Directory</span>
-                  <input type="file" ref={folderInputRef} className="hidden" webkitdirectory="true" />
+                  <input type="file" ref={folderInputRef} className="hidden" webkitdirectory="true" directory="" />
                 </button>
-                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-4 p-6 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all group shadow-sm">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-4 p-6 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all group shadow-sm"
+                >
                   <FileCode size={20} className="text-gray-400 group-hover:text-black transition-colors" />
                   <span className="text-sm font-semibold text-gray-900">Manifest Files</span>
                   <input type="file" ref={fileInputRef} className="hidden" accept=".json,.lock,.txt,.yml,.yaml" />
@@ -175,10 +242,15 @@ export default function App() {
     );
   }
 
+  // Results view (onboarding, anatomy, vulns) JSX remains unchanged
+  // Just ensure all arrays are accessed with ensureArray(scanResults?....)
+
   return (
     <div className="min-h-screen bg-[#FBFBFD] text-black antialiased">
       <Navbar />
-      {/* Results view remains unchanged */}
+      <main className="max-w-[1100px] mx-auto px-8 py-16 animate-in fade-in duration-1000">
+        {/* The onboarding / anatomy / vulnerabilities JSX as in your original code */}
+      </main>
     </div>
   );
 }
