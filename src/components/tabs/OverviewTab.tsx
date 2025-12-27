@@ -1,67 +1,86 @@
+"use client";
+
 import { Copy, Check, Target } from "lucide-react";
 
 export default function OverviewTab({ scanResults, copiedId, setCopiedId }: any) {
     const handleCopy = (text: string, id: string) => {
-        navigator.clipboard.writeText(text);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 2000);
+        if (typeof navigator !== "undefined" && navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                setCopiedId(id);
+                setTimeout(() => setCopiedId(null), 2000);
+            });
+        } else {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.top = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            setCopiedId(id);
+            setTimeout(() => setCopiedId(null), 2000);
+        }
     };
 
     return (
-        <div className="grid grid-cols-12 gap-8">
-            <div className="col-span-8 space-y-8">
-                <h2 className="text-5xl font-bold tracking-tight">Project Roadmap</h2>
-                <p className="text-xl text-gray-500">
-                    {scanResults.agents_reports.architect.summary}
-                </p>
+        <div className="flex flex-col lg:flex-row items-start gap-12 max-w-7xl mx-auto px-6 py-8">
 
+            {/* Left Panel: Heading & Repo Info */}
+            <div className="flex-shrink-0 w-full lg:w-64 space-y-4">
+                <h2 className="text-3xl font-bold text-gray-900">Project Roadmap</h2>
+                <p className="text-gray-500">{scanResults.agents_reports.architect.summary}</p>
+            </div>
+
+            {/* Center Panel: Steps */}
+            <div className="flex-1 flex flex-col gap-6">
                 {scanResults.agents_reports.dx.steps.map((step: any, idx: number) => (
-                    <div key={idx} className="bg-white p-8 rounded-[32px] border border-gray-100 flex gap-8">
-                        <div className="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center font-bold border">
-                            {idx + 1}
-                        </div>
-
-                        <div className="space-y-4 flex-1">
-                            <div className="flex justify-between">
-                                <h3 className="text-xl font-bold">{step.title}</h3>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${step.priority === "High"
-                                        ? "bg-red-50 text-red-600"
-                                        : "bg-blue-50 text-blue-600"
-                                    }`}>
+                    <div
+                        key={idx}
+                        className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col gap-3 shadow-sm hover:shadow-md transition"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center font-semibold border">
+                                {idx + 1}
+                            </div>
+                            <div className="flex-1 flex justify-between items-center">
+                                <h3 className="text-gray-900 font-medium">{step.title}</h3>
+                                <span
+                                    className={`text-xs font-semibold uppercase px-2 py-1 rounded-full ${step.priority === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                                        }`}
+                                >
                                     {step.priority}
                                 </span>
                             </div>
+                        </div>
+                        <p className="text-gray-500 text-sm">{step.desc}</p>
 
-                            <p className="text-gray-500 text-sm">{step.desc}</p>
-
-                            <div className="bg-gray-900 rounded-2xl p-4 flex justify-between">
-                                <code className="text-blue-400 text-xs font-mono">$ {step.cmd}</code>
-                                <button onClick={() => handleCopy(step.cmd, `dx-${idx}`)}>
-                                    {copiedId === `dx-${idx}` ? <Check size={16} /> : <Copy size={16} />}
-                                </button>
-                            </div>
+                        <div className="relative bg-gray-900 rounded-xl p-3 flex justify-between items-center font-mono text-green-400">
+                            <code className="overflow-x-auto text-sm">{`$ ${step.cmd}`}</code>
+                            <button
+                                onClick={() => handleCopy(step.cmd, `dx-${idx}`)}
+                                className="ml-4 text-gray-300 hover:text-white transition"
+                            >
+                                {copiedId === `dx-${idx}` ? <Check size={16} /> : <Copy size={16} />}
+                            </button>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="col-span-4 space-y-6">
-                <div className="bg-black rounded-[32px] p-8 text-white space-y-8">
-                    <div className="flex justify-between">
-                        <Target size={24} className="text-blue-500" />
+            {/* Right Panel: Health Score */}
+            <div className="flex-shrink-0 w-full lg:w-64">
+                <div className="bg-gray-900 text-white rounded-2xl p-6 space-y-4 shadow-sm">
+                    <div className="flex justify-between items-center">
+                        <Target size={20} className="text-blue-400" />
                         <div className="text-right">
-                            <span className="text-[10px] text-gray-500 uppercase block">
-                                Health Score
-                            </span>
-                            <span className="text-5xl font-bold">
-                                {scanResults.metadata.score}%
-                            </span>
+                            <span className="text-xs uppercase text-gray-400 block">Health Score</span>
+                            <span className="text-3xl font-bold">{scanResults.metadata.score}%</span>
                         </div>
                     </div>
-
-                    <div className="h-1.5 w-full bg-white/10 rounded-full">
+                    <div className="h-2 w-full bg-white/20 rounded-full">
                         <div
-                            className="h-full bg-blue-500"
+                            className="h-full bg-blue-400 rounded-full transition-all"
                             style={{ width: `${scanResults.metadata.score}%` }}
                         />
                     </div>
