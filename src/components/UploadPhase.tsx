@@ -1,44 +1,81 @@
+"use client";
+
 import { motion } from "framer-motion";
-import { AGENTS } from "@/agents/agents";
+import { Target, FileText, Link, Check } from "lucide-react";
+import { useState } from "react";
 
-export default function UploadPhase({ repoUrl, setRepoUrl, performScan }: any) {
-    return (
-        <motion.div className="max-w-4xl mx-auto pt-32 px-6 text-center space-y-12">
-            <h1 className="text-7xl font-bold tracking-tighter leading-tight">
-                Autonomous <br /><span className="text-blue-600">Code Intelligence.</span>
-            </h1>
+export default function UploadPhase({ performScan, securityScore }: any) {
+  const [activeTab, setActiveTab] = useState<"url" | "file">("url");
+  const [repoUrl, setRepoUrl] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
 
-            <p className="text-xl text-gray-500 max-w-xl mx-auto font-medium">
-                Three specialized AI agents auditing architecture and security.
-            </p>
+  return (
+    <motion.div className="max-w-4xl mx-auto flex flex-col items-center justify-center h-screen px-6 py-8 space-y-8">
+      {/* Heading */}
+      <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-center">
+        Autonomous <span className="text-blue-600">Code Intelligence</span>
+      </h1>
 
-            <div className="relative max-w-2xl mx-auto">
-                <input
-                    className="w-full bg-white border-2 border-gray-100 rounded-[30px] py-6 px-8 text-lg shadow-2xl"
-                    placeholder="Paste repository URL..."
-                    value={repoUrl}
-                    onChange={(e) => setRepoUrl(e.target.value)}
-                />
-                <button
-                    onClick={() => performScan(repoUrl)}
-                    disabled={!repoUrl}
-                    className="absolute right-3 top-3 bottom-3 px-8 bg-black text-white rounded-[22px] font-bold text-sm"
-                >
-                    Start Audit
-                </button>
+      {/* Tab Switch */}
+      <div className="flex bg-gray-100 rounded-full p-1 gap-1 shadow-sm">
+        <button
+          onClick={() => setActiveTab("url")}
+          className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+            activeTab === "url" ? "bg-white shadow text-blue-600" : "text-gray-500"
+          }`}
+        >
+          <Link size={16} /> Repository URL
+        </button>
+        <button
+          onClick={() => setActiveTab("file")}
+          className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+            activeTab === "file" ? "bg-white shadow text-blue-600" : "text-gray-500"
+          }`}
+        >
+          <FileText size={16} /> Upload File
+        </button>
+      </div>
+
+      {/* Input Area */}
+      <div className="w-full max-w-2xl relative flex flex-col gap-4">
+        {activeTab === "url" ? (
+          <input
+            type="text"
+            className="w-full bg-white border-2 border-gray-100 rounded-[20px] py-4 px-6 text-lg shadow-md focus:border-blue-500 transition-all"
+            placeholder="Paste repository URL..."
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+          />
+        ) : (
+          <input
+            type="file"
+            accept=".zip,.tar,.gz"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full border border-gray-200 rounded-[20px] py-3 px-6 text-sm"
+          />
+        )}
+        <button
+          onClick={() => performScan(repoUrl, file)}
+          disabled={(activeTab === "url" && !repoUrl) || (activeTab === "file" && !file)}
+          className="absolute right-3 top-3 bottom-3 bg-black text-white font-bold px-6 py-2 rounded-[20px] hover:bg-gray-800 transition-all flex items-center gap-2"
+        >
+          <Check size={16} /> Start Audit
+        </button>
+      </div>
+
+      {/* Security Score */}
+      {securityScore !== undefined && (
+        <div className="flex items-center gap-3 mt-2 w-full max-w-2xl">
+          <Target size={20} className="text-blue-600" />
+          <div className="flex-1 flex flex-col">
+            <span className="text-xs text-gray-500 uppercase tracking-widest">Health Score</span>
+            <div className="text-xl font-bold">{securityScore}%</div>
+            <div className="h-1.5 w-full bg-gray-200 rounded-full mt-1">
+              <div className="h-full bg-blue-600 rounded-full" style={{ width: `${securityScore}%` }} />
             </div>
-
-            <div className="grid grid-cols-3 gap-6 pt-12">
-                {AGENTS.map((agent, i) => (
-                    <div key={i} className="p-6 bg-white border rounded-[24px] text-left space-y-4">
-                        <div className={`w-10 h-10 rounded-xl bg-${agent.color}-50 text-${agent.color}-600 flex items-center justify-center`}>
-                            {agent.icon}
-                        </div>
-                        <h4 className="font-bold text-sm">{agent.name}</h4>
-                        <p className="text-xs text-gray-400">{agent.desc}</p>
-                    </div>
-                ))}
-            </div>
-        </motion.div>
-    );
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
 }

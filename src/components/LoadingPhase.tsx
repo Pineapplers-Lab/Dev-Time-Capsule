@@ -1,32 +1,72 @@
-import { motion } from "framer-motion";
-import { Activity } from "lucide-react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AGENTS } from "@/agents/agents";
 
 export default function LoadingPhase({ activeAgentIdx }: any) {
-    return (
-        <motion.div className="fixed inset-0 bg-white/90 backdrop-blur-2xl z-[100] flex items-center justify-center p-8">
-            <div className="w-full max-w-xl space-y-12 text-center">
-                <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${((activeAgentIdx + 1) / AGENTS.length) * 100}%` }}
-                        className="h-full bg-blue-600"
-                    />
-                </div>
+    const [logs, setLogs] = useState<string[]>([]);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-                <div className="grid grid-cols-3 gap-6">
-                    {AGENTS.map((agent, i) => (
-                        <motion.div
-                            key={i}
-                            animate={{ scale: activeAgentIdx === i ? 1.05 : 0.95, opacity: activeAgentIdx === i ? 1 : 0.4 }}
-                            className="p-6 rounded-[24px] border"
-                        >
-                            {activeAgentIdx === i ? <Activity className="animate-spin" /> : agent.icon}
-                            <h4 className="font-bold text-xs mt-4">{agent.name}</h4>
-                        </motion.div>
-                    ))}
+    useEffect(() => {
+        if (!AGENTS[activeAgentIdx]) return;
+
+        const agent = AGENTS[activeAgentIdx];
+        const message = `>> ${agent.name}: querying ${agent.desc.toLowerCase()}...`;
+
+        setLogs((prev) => [...prev, message]);
+
+        // Auto-scroll to latest log
+        const timer = setTimeout(() => {
+            containerRef.current?.scrollTo({
+                top: containerRef.current.scrollHeight,
+                behavior: "smooth",
+            });
+        }, 50);
+
+        return () => clearTimeout(timer);
+    }, [activeAgentIdx]);
+
+    return (
+        <AnimatePresence>
+            <motion.div
+                className="fixed inset-0 bg-white/95 backdrop-blur-xl z-[100] flex items-center justify-center p-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+            >
+                <div className="w-full max-w-xl flex flex-col items-start space-y-4">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2">Audit in Progress</h2>
+
+                    <div
+                        ref={containerRef}
+                        className="w-full h-80 overflow-y-auto bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-mono text-gray-700 space-y-2"
+                    >
+                        {logs.map((log, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex items-center justify-between"
+                            >
+                                <span>{log}</span>
+                                {i === logs.length - 1 && (
+                                    <motion.span
+                                        className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"
+                                    />
+                                )}
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <div className="text-gray-500 text-sm mt-2">
+                        {AGENTS[activeAgentIdx]
+                            ? `Currently processing: ${AGENTS[activeAgentIdx].name}`
+                            : "Initializing agents..."}
+                    </div>
                 </div>
-            </div>
-        </motion.div>
+            </motion.div>
+        </AnimatePresence>
     );
 }
