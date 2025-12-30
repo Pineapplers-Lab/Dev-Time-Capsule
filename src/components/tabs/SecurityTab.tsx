@@ -76,20 +76,6 @@ export default function SecurityTab({ scanResults, copiedId, setCopiedId }: any)
     return (
         <div className="min-h-screen bg-white">
             <div className="max-w-4xl mx-auto px-6 py-16">
-
-                {/* Header Section */}
-                <div className="mb-16 text-center animate-fade-in">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-50 mb-6 animate-scale-in">
-                        <Shield size={36} className="text-gray-900" strokeWidth={1.5} />
-                    </div>
-                    <h1 className="text-5xl font-semibold text-gray-900 mb-4 tracking-tight">
-                        Security
-                    </h1>
-                    <p className="text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                        Review and resolve security vulnerabilities in your dependencies
-                    </p>
-                </div>
-
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                     <div className="bg-white border border-gray-200 rounded-2xl p-5 text-center transition-all duration-300 hover:border-gray-300 hover:shadow-lg">
