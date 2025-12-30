@@ -116,27 +116,34 @@ export default function SecurityTab({ scanResults, copiedId, setCopiedId }: any)
                                 style={{ animationDelay: `${idx * 60 + 200}ms` }}
                             >
                                 {/* Header */}
-                                <div className="flex items-start gap-4 mb-4">
+                                <div className="flex items-start gap-4 mb-5">
                                     {/* Icon */}
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center transition-all duration-300 group-hover:bg-gray-100 group-hover:scale-105">
-                                        <Package size={22} className={severityColor} strokeWidth={1.5} />
+                                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-white/80 backdrop-blur border border-gray-200/60 flex items-center justify-center transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-sm">
+                                        <Package
+                                            size={20}
+                                            className={severityColor}
+                                            strokeWidth={1.4}
+                                        />
                                     </div>
 
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <h3 className="text-xl font-semibold text-gray-900">
+                                        <div className="flex items-center gap-3 mb-1.5">
+                                            <h3 className="text-[17px] font-semibold text-gray-900 tracking-tight truncate">
                                                 {vuln.pkg}
                                             </h3>
-                                            <span className="px-2.5 py-0.5 text-xs font-semibold text-gray-600 bg-gray-100 rounded-full">
+
+                                            <span className="px-2.5 py-0.5 text-[11px] font-medium text-gray-700 bg-gray-100/80 rounded-full border border-gray-200/60">
                                                 {vuln.severity}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-600 leading-relaxed">
+
+                                        <p className="text-[13.5px] text-gray-600 leading-[1.6] line-clamp-2">
                                             {vuln.desc}
                                         </p>
                                     </div>
                                 </div>
+
 
                                 {/* Fix Section */}
                                 <div className="space-y-3 pl-16">
@@ -150,25 +157,26 @@ export default function SecurityTab({ scanResults, copiedId, setCopiedId }: any)
                                     </div>
 
                                     {/* Command Box */}
-                                    <div className="relative bg-gray-50 rounded-xl p-4 border border-gray-200 transition-all duration-300 group-hover:bg-gray-100">
+                                    <div className="relative bg-[#020617] rounded-xl p-4 border border-[#0f172a] transition-all duration-300 group-hover:bg-[#020617]">
                                         <div className="flex items-center gap-3">
-                                            <Terminal size={16} className="text-gray-400 flex-shrink-0" strokeWidth={2} />
-                                            <code className="flex-1 text-sm font-mono text-gray-800 overflow-x-auto">
+                                            <Terminal size={16} className="text-green-400 flex-shrink-0" strokeWidth={2} />
+                                            <code className="flex-1 text-sm font-mono text-green-400 overflow-x-auto">
                                                 {vuln.fix_command}
                                             </code>
                                             <button
                                                 onClick={() => handleCopy(vuln.fix_command, `v-${idx}`)}
-                                                className="flex-shrink-0 w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:border-gray-300 transition-all duration-200 active:scale-95"
+                                                className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#020617] border border-[#1e293b] flex items-center justify-center text-green-400 hover:text-green-300 hover:border-[#334155] transition-all duration-200 active:scale-95"
                                                 aria-label="Copy command"
                                             >
                                                 {activeCopiedId === `v-${idx}` ? (
-                                                    <Check size={16} className="text-green-600" strokeWidth={2.5} />
+                                                    <Check size={16} className="text-green-400" strokeWidth={2.5} />
                                                 ) : (
                                                     <Copy size={16} strokeWidth={2} />
                                                 )}
                                             </button>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         );

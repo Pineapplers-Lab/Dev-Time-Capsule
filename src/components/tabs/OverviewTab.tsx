@@ -87,8 +87,8 @@ export default function OverviewTab({ scanResults, copiedId, setCopiedId }: any)
                                         </h3>
                                         <span
                                             className={`text-xs font-semibold uppercase px-3 py-1 rounded-full transition-all duration-300 ${step.priority === "High"
-                                                    ? "bg-gray-100 text-gray-900"
-                                                    : "bg-gray-50 text-gray-600"
+                                                ? "bg-gray-100 text-gray-900"
+                                                : "bg-gray-50 text-gray-600"
                                                 }`}
                                         >
                                             {step.priority}
@@ -101,25 +101,28 @@ export default function OverviewTab({ scanResults, copiedId, setCopiedId }: any)
                             </div>
 
                             {/* Command Section */}
-                            <div className="relative bg-gray-50 rounded-xl p-4 border border-gray-200 transition-all duration-300 group-hover:bg-gray-100">
+                            {/* Command Section */}
+                            <div className="relative bg-[#020617] rounded-xl p-4 border border-[#0f172a] transition-all duration-300 group-hover:bg-[#020617]">
                                 <div className="flex items-center gap-3">
-                                    <Terminal size={18} className="text-gray-400 flex-shrink-0" />
-                                    <code className="flex-1 text-sm font-mono text-gray-800 overflow-x-auto">
+                                    <Terminal size={18} className="text-green-400 flex-shrink-0" />
+                                    <code className="flex-1 text-sm font-mono text-green-400 overflow-x-auto">
                                         {step.cmd}
                                     </code>
                                     <button
                                         onClick={() => handleCopy(step.cmd, `dx-${idx}`)}
-                                        className="flex-shrink-0 w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition-all duration-200 active:scale-95"
+                                        className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#020617] border border-[#1e293b] flex items-center justify-center text-green-400 hover:text-green-300 hover:border-[#334155] transition-all duration-200 active:scale-95"
                                         aria-label="Copy command"
                                     >
                                         {copiedId === `dx-${idx}` ? (
-                                            <Check size={16} className="text-green-600" />
+                                            <Check size={16} className="text-green-400" />
                                         ) : (
                                             <Copy size={16} />
                                         )}
                                     </button>
                                 </div>
                             </div>
+
+
                         </div>
                     ))}
                 </div>
